@@ -1,15 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
 	const canvas = document.querySelector('#canvas');
 
-	canvas.width = innerWidth * .8;
-	canvas.height = innerHeight * .8;
+	canvas.width = innerWidth;
+	canvas.height = innerHeight;
 
 	const ox = canvas.width/2;
-	const oy = canvas.height/2;
+	// const oy = canvas.height/2;
 
 	const ctx = canvas.getContext('2d');
 
-	let camera = {x: 0, y: 0};
+	let camera = {x: 0, y: 0, angle: 0};
 
 	// Create spaceShip
 	class SpaceShip {
@@ -56,9 +56,11 @@ document.addEventListener('DOMContentLoaded', () => {
 	}
 
 	const player = new SpaceShip('/images/space-ship.png');
+	player.height = player.img.height;
+	player.y = canvas.height - player.height - 50;
 	player.acceleration = 40;
-	player.friction = 10;
-	player.speedMax = 260;
+	player.friction = 5;
+	player.speedMax = 600;
 
 	const star = [];
 	const nbStars = 800;
@@ -83,26 +85,44 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	const keys = {
 		z: false,
-		s: false
+		s: false,
+		q: false,
+		d: false
 	}
 
-	document.addEventListener('keydown', (event) => {
-		if (event.key === 'z') {
-			keys.z = true;
-		}
-
-		if (event.key === 's') {
-			keys.s = true;
+	document.addEventListener('keydown', (k) => {
+		switch (k.key) {
+			case 'z':
+				keys.z = true;
+				break;
+			case 's':
+				keys.s = true;
+				break;
+			case 'q':
+				keys.q = true;
+				break;
+			case 'd':
+				keys.d = true;
+				break;
+			default:
 		}
 	})
 
-	document.addEventListener('keyup', (event) => {
-		if (event.key === 'z') {
-			keys.z = false;
-		}
-
-		if (event.key === 's') {
-			keys.s = false;
+	document.addEventListener('keyup', (k) => {
+		switch (k.key) {
+			case 'z':
+				keys.z = false;
+				break;
+			case 's':
+				keys.s = false;
+				break;
+			case 'q':
+				keys.q = false;
+				break;
+			case 'd':
+				keys.d = false;
+				break;
+			default:
 		}
 	})
 
@@ -117,37 +137,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		// ctx.beginPath();
-		// ctx.moveTo(ox, 0);
-		// ctx.lineTo(ox, canvas.height);
-		// ctx.strokeStyle = "#fff";
-		// ctx.lineWidth = 1;
-		// ctx.stroke();
-
-		// ctx.beginPath();
-		// ctx.moveTo(0, oy);
-		// ctx.lineTo(canvas.width, oy);
-		// ctx.strokeStyle = "#fff";
-		// ctx.lineWidth = 1;
-		// ctx.stroke();
-
 		if (keys.z) {
-			if (player.vy < player.speedMax) {
-				player.vy += player.acceleration;
+			player.vy = Math.min(player.speedMax, player.vy += player.acceleration);
+
+		} else {
+			if (player.vy > 0) {
+				player.vy = Math.max(player.speedMin, player.vy -= player.friction);
 			}
-		} else if (keys.s) {
-			if (player.vy > - player.speedMax) {
-				player.vy -= player.acceleration;
+		}
+
+		if (keys.s) {
+			player.vy = Math.max(- player.speedMax, player.vy -= player.acceleration);
+		} else {
+			if (player.vy < 0) {
+				player.vy = Math.min(player.speedMin, player.vy += player.friction);
 			}
-		} else if (player.vy > 0) {
-			player.vy -= player.friction;
-			if (player.vy < 0) {player.vy = 0};
-		} else if (player.vy < 0) {
-			player.vy += player.friction;
-			if (player.vy > 0) {player.vy = 0};
+		}
+
+		if (keys.q) {
+			player.vx = Math.max(- player.speedMax, player.vx -= player.acceleration);
+		} else {
+			if (player.vx < 0) {
+				player.vx = Math.min(player.speedMin, player.vx += player.friction);
+			}
+		}
+
+		if (keys.d) {
+			player.vx = Math.min(player.speedMax, player.vx += player.acceleration);
+		} else {
+			if (player.vx > 0) {
+				player.vx = Math.max(player.speedMin, player.vx -= player.friction);
+			}
 		}
 		
-		if (player.vy != 0) {
+		if (player.vx != 0 || player.vy != 0) {
+			player.x += player.vx * dt;
 			camera.y += player.vy * dt;
 		}
 
