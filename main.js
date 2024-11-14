@@ -11,6 +11,7 @@ const nbStars = 800;
 
 let lstBullets = [];
 let sndBullets = [];
+let lstEnnemis = [];
 
 // Create space
 class Star {
@@ -88,6 +89,17 @@ class SpaceShip {
 
 document.addEventListener('DOMContentLoaded', () => {
 	const player = new SpaceShip('/images/space-ship.png');
+
+	for (let n = 0; n < 10; n++) {
+		let e = lstEnnemis[n];
+		lstEnnemis.push(new SpaceShip('/images/ennemy.png'));
+		lstEnnemis[n].img.onload = () => {
+			lstEnnemis[n].width = lstEnnemis[n].img.width;
+			lstEnnemis[n].height = lstEnnemis[n].img.height;
+			lstEnnemis[n].x = Math.random() * (canvas.width - lstEnnemis[n].width);
+			lstEnnemis[n].y = Math.random() * (2 * -canvas.height) - lstEnnemis[n].height;
+		}
+	}
 
 	player.img.onload = () => {
 		player.width = player.img.width;
@@ -209,6 +221,15 @@ document.addEventListener('DOMContentLoaded', () => {
 		})
 		
 		player.draw(ctx);
+		
+		lstEnnemis.map((e) => {
+			e.y += 150 * dt;
+			if (e.y > canvas.height + e.height) {
+				e.x = Math.random() * (canvas.width - e.width);
+				e.y = Math.random() * (2 * -canvas.height) - e.height;
+			}
+			e.draw(ctx);
+		})
 
 		requestAnimationFrame(gameLoop);
 	}
