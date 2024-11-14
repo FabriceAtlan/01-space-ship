@@ -1,87 +1,80 @@
-document.addEventListener('DOMContentLoaded', () => {
-	const canvas = document.querySelector('#canvas');
+const canvas = document.querySelector('#canvas');
+const ctx = canvas.getContext('2d');
 
-	canvas.width = innerWidth;
-	canvas.height = innerHeight;
+canvas.width = 620;
+canvas.height = innerHeight * .95;
 
-	const ox = canvas.width/2;
-	// const oy = canvas.height/2;
+let camera = {x: 0, y: 0, angle: 0};
 
-	const ctx = canvas.getContext('2d');
+const star = [];
+const nbStars = 800;
 
-	let camera = {x: 0, y: 0, angle: 0};
+// Create space
+class Star {
+	constructor(x, y, radius) {
+		this.x = x;
+		this.y = y;
+		this.radius = radius;
+	}
 
-	// Create spaceShip
-	class SpaceShip {
-		constructor (imgSrc) {
-			this.img = new Image();
-			this.img.src = imgSrc;
-			this.width = 0;
-			this.height = 0;
+	draw(ctx) {
+		ctx.beginPath();
+		ctx.arc(this.x, this.y + camera.y, this.radius, 0, 2 * Math.PI);
+		ctx.fillStyle = '#fff';
+		ctx.fill();
+	}
+}
 
-			this.x = 0;
-			this.y = 0;
+for (let i = 0; i < nbStars; i++) {
+	const newStar = new Star (
+		Math.random() * canvas.width,
+		Math.random() * canvas.height,
+		Math.random() * (1.5 + .2) + .2
+	)
+	star.push(newStar);
+}
 
-			this.vx = 0;
-			this.vy = 0;
-			
-			this.speed = 0;
-			this.acceleration = 0;
-			this.friction = 0;
-			this.speedMax = 0;
-			this.speedMin = 0;
-		}
+// Create spaceShip
+class SpaceShip {
+	constructor (imgSrc) {
+		this.img = new Image();
+		this.img.src = imgSrc;
+		this.width = 0;
+		this.height = 0;
+
+		this.x = 0;
+		this.y = 0;
+
+		this.vx = 0;
+		this.vy = 0;
 		
-		draw(ctx) {
-			if (this.width && this.height) {
-				ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
-			}
-		};
+		this.speed = 0;
+		this.acceleration = 0;
+		this.friction = 0;
+		this.speedMax = 0;
+		this.speedMin = 0;
 	}
-
-	// Create space
-	class Star {
-		constructor(x, y, radius) {
-			this.x = x;
-			this.y = y;
-			this.radius = radius;
+	
+	draw(ctx) {
+		if (this.width && this.height) {
+			ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
 		}
+	};
+}
 
-		draw(ctx) {
-			ctx.beginPath();
-			ctx.arc(this.x, this.y + camera.y, this.radius, 0, 2 * Math.PI);
-			ctx.fillStyle = '#fff';
-			ctx.fill();
-		}
-	}
-
+document.addEventListener('DOMContentLoaded', () => {
 	const player = new SpaceShip('/images/space-ship.png');
-	player.height = player.img.height;
-	player.y = canvas.height - player.height - 50;
-	player.acceleration = 40;
-	player.friction = 5;
-	player.speedMax = 600;
-
-	const star = [];
-	const nbStars = 800;
-
-	for (let i = 0; i < nbStars; i++) {
-		const newStar = new Star (
-			Math.random() * canvas.width,
-			Math.random() * canvas.height,
-			Math.random() * (1.5 + .2) + .2
-		)
-
-		star.push(newStar);
-	}
 
 	player.img.onload = () => {
 		player.width = player.img.width;
 		player.height = player.img.height;
-			
-		player.x = ox - player.width / 2;
-		player.y = oy - player.height / 2;
+		player.x = (canvas.width - player.width) / 2;
+		player.y = canvas.height - player.height * 1.5;
 	}
+	
+	player.acceleration = 40;
+	player.friction = 20;
+	player.speedMax = 600;
 
 	const keys = {
 		z: false,
@@ -92,12 +85,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	document.addEventListener('keydown', (k) => {
 		switch (k.key) {
-			case 'z':
-				keys.z = true;
-				break;
-			case 's':
-				keys.s = true;
-				break;
 			case 'q':
 				keys.q = true;
 				break;
@@ -110,12 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 	document.addEventListener('keyup', (k) => {
 		switch (k.key) {
-			case 'z':
-				keys.z = false;
-				break;
-			case 's':
-				keys.s = false;
-				break;
 			case 'q':
 				keys.q = false;
 				break;
@@ -137,23 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 		ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-		if (keys.z) {
-			player.vy = Math.min(player.speedMax, player.vy += player.acceleration);
-
-		} else {
-			if (player.vy > 0) {
-				player.vy = Math.max(player.speedMin, player.vy -= player.friction);
-			}
-		}
-
-		if (keys.s) {
-			player.vy = Math.max(- player.speedMax, player.vy -= player.acceleration);
-		} else {
-			if (player.vy < 0) {
-				player.vy = Math.min(player.speedMin, player.vy += player.friction);
-			}
-		}
-
 		if (keys.q) {
 			player.vx = Math.max(- player.speedMax, player.vx -= player.acceleration);
 		} else {
@@ -169,11 +133,15 @@ document.addEventListener('DOMContentLoaded', () => {
 				player.vx = Math.max(player.speedMin, player.vx -= player.friction);
 			}
 		}
-		
-		if (player.vx != 0 || player.vy != 0) {
-			player.x += player.vx * dt;
-			camera.y += player.vy * dt;
+
+		if (player.x > canvas.width) {
+			player.x = - player.width;
+		} else if (player.x < - player.width) {
+			player.x = canvas.width;
 		}
+
+		player.x += player.vx * dt;
+		camera.y += 200 * dt;
 
 		star.map((s) => {
 			if (s.y + camera.y > canvas.height) {
