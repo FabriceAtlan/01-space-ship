@@ -9,6 +9,9 @@ let camera = {x: 0, y: 0, angle: 0};
 const star = [];
 const nbStars = 800;
 
+let lstBullets = [];
+let sndBullets = [];
+
 // Create space
 class Star {
 	constructor(x, y, radius) {
@@ -34,6 +37,21 @@ for (let i = 0; i < nbStars; i++) {
 	star.push(newStar);
 }
 
+class Bullet {
+	constructor (x, y) {
+		this.x = x;
+		this.y = y;
+		this.speed = 500;
+	}
+
+	drawBullet(ctx, decX) {
+		ctx.beginPath();
+		ctx.arc(this.x + decX, this.y, 3, 0, 2 * Math.PI);
+		ctx.fillStyle = "red";
+		ctx.fill();
+	}
+}
+
 // Create spaceShip
 class SpaceShip {
 	constructor (imgSrc) {
@@ -54,9 +72,15 @@ class SpaceShip {
 		this.speedMax = 0;
 		this.speedMin = 0;
 	}
+
+	addBullet(x, y) {
+		lstBullets.push(new Bullet(x, y));
+		sndBullets.push(new Audio('/sounds/blaster.wav'));
+	}
 	
 	draw(ctx) {
 		if (this.width && this.height) {
+			ctx.fillStyle = "red"
 			ctx.drawImage(this.img, this.x, this.y, this.width, this.height);
 		}
 	};
@@ -74,14 +98,15 @@ document.addEventListener('DOMContentLoaded', () => {
 	
 	player.acceleration = 40;
 	player.friction = 20;
-	player.speedMax = 600;
+	player.speedMax = 300;
 
 	const keys = {
-		z: false,
-		s: false,
 		q: false,
-		d: false
+		d: false,
+		space: false
 	}
+
+	let isPressed = false;
 
 	document.addEventListener('keydown', (k) => {
 		switch (k.key) {
@@ -90,6 +115,13 @@ document.addEventListener('DOMContentLoaded', () => {
 				break;
 			case 'd':
 				keys.d = true;
+				break;
+			case ' ':
+				if (!keys.space) {
+					keys.space = true;
+					isPressed = true;
+					player.addBullet(player.x, player.y);
+				}
 				break;
 			default:
 		}
@@ -102,6 +134,10 @@ document.addEventListener('DOMContentLoaded', () => {
 				break;
 			case 'd':
 				keys.d = false;
+				break;
+			case ' ':
+				keys.space = false;
+				isPressed = false;
 				break;
 			default:
 		}
@@ -152,6 +188,24 @@ document.addEventListener('DOMContentLoaded', () => {
 				s.y = canvas.height - camera.y;
 			}
 			s.draw(ctx);
+		})
+
+		lstBullets = lstBullets.filter(b => b.y > 0);
+
+		lstBullets.map((b) => {
+			b.y -= b.speed * dt;
+		})
+
+		sndBullets.map((b) => {
+			const index = sndBullets.indexOf(b);
+			if (index !== -1) {
+				sndBullets.splice(index, 1);
+			}
+			b.play();
+		})
+
+		lstBullets.forEach((bullet) => {
+		 	bullet.drawBullet(ctx, player.width/2);
 		})
 		
 		player.draw(ctx);
